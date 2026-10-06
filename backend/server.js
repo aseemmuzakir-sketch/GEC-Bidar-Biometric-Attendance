@@ -18,6 +18,7 @@ const attendanceModule = require('./attendance');
 const { User } = require('./models');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/gec_attendance';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
