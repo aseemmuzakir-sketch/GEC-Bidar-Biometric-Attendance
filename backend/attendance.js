@@ -17,10 +17,28 @@ const livePunchesBuffer = [];
 // GET /api/attendance/sessions
 router.get('/sessions', authenticateToken, async (_req, res) => {
   try {
-    const sessions = await AttendanceSession.find().sort({ openedAt: -1 }).limit(20);
-    return res.json({ sessions });
+    const sessions = await AttendanceSession.find()
+      .sort({ openedAt: -1 })
+      .limit(20);
+
+    const formattedSessions = sessions.map((s) => ({
+      id: s._id.toString(),
+      subject: s.subject,
+      sessionType: s.sessionType,
+      location: s.location,
+      facultyId: s.facultyId,
+      facultyName: s.facultyName,
+      status: s.status,
+      openedAt: s.openedAt,
+      closedAt: s.closedAt || undefined
+    }));
+
+    return res.json({ sessions: formattedSessions });
   } catch (err) {
-    return res.status(500).json({ message: 'Error retrieving attendance sessions' });
+    console.error('[Attendance] Error retrieving sessions:', err);
+    return res.status(500).json({
+      message: err.message || 'Error retrieving attendance sessions'
+    });
   }
 });
 
@@ -51,10 +69,23 @@ router.post('/sessions', authenticateToken, requireRole('faculty'), async (req, 
     });
 
     await session.save();
-    return res.status(201).json(session);
-  } catch (err) {
-    return res.status(500).json({ message: err.message || 'Failed to open attendance session' });
-  }
+
+return res.status(201).json({
+  id: session._id.toString(),
+  subject: session.subject,
+  sessionType: session.sessionType,
+  location: session.location,
+  facultyId: session.facultyId,
+  facultyName: session.facultyName,
+  status: session.status,
+  openedAt: session.openedAt,
+  closedAt: session.closedAt || undefined
+});
+} catch (err) {
+  return res.status(500).json({
+    message: err.message || 'Failed to open attendance session'
+  });
+}
 });
 
 // POST /api/attendance/sessions/:id/close (Faculty Only)
