@@ -1,0 +1,6 @@
+{
+  "name": "GEC Bidar Attendance Management System",
+  "description": "Official attendance management system for Government Engineering College, Bidar featuring biometric WebAuthn verification, live classroom sessions, manual roll call, parent absence notification, and VTU compliance reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
