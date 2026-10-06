@@ -119,10 +119,10 @@ async function startServer() {
     console.warn('[Database] The server will still serve APIs. Ensure MongoDB is running on port 27017 for persistent storage.');
   }
 
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`====================================================`);
     console.log(`GEC BIDAR ATTENDANCE MANAGEMENT BACKEND`);
-    console.log(`Server running on: http://localhost:${PORT}`);
+    console.log(`Server running on port: ${PORT}`);
     console.log(`API base route:    http://localhost:${PORT}/api`);
     console.log(`CORS allowed for:  ${FRONTEND_URL}`);
     console.log(`====================================================`);
