@@ -7,7 +7,7 @@ const TOKEN_KEY = 'gec_attendance_token';
 const USER_KEY = 'gec_attendance_user';
 
 // Allows pointing to standalone backend (e.g., http://localhost:5000/api) or relative /api
-let apiBaseUrl = (import.meta.env.VITE_API_URL as string) || '/api';
+let apiBaseUrl = (import.meta.env.VITE_API_URL as string) || 'https://gec-bidar-attendance-backend.onrender.com/api';
 
 export function getApiBaseUrl(): string {
   return apiBaseUrl;
@@ -142,7 +142,7 @@ export async function request<T = any>(endpoint: string, options: ApiRequestOpti
 
     console.error(`[Attendance Network Failure] ${options.method || 'GET'} ${url}:`, err);
 
-    let customMsg = 'Attendance server is unavailable. Please verify the backend is running on http://localhost:5000.';
+    let customMsg = 'Attendance server is unavailable. Please verify the backend is running.';
     if (err.name === 'TypeError' && String(err.message).includes('Failed to fetch')) {
       customMsg = 'Attendance server connection failed (Network/CORS). Please verify backend server is active and accessible.';
     }
