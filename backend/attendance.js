@@ -160,6 +160,50 @@ router.post('/sessions', authenticateToken, requireRole('faculty'), async (req, 
   }
 });
 
+// GET /api/attendance/sessions/:id/punches (Faculty Live Punch Feed)
+router.get('/sessions/:id/punches', authenticateToken, requireRole('faculty'), async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+
+    console.log('[Attendance] Fetching live punches for session:', sessionId);
+
+    if (!sessionId || !mongoose.isValidObjectId(sessionId)) {
+      return res.status(400).json({
+        message: `Invalid attendance session ID: ${sessionId}`
+      });
+    }
+
+    const punches = await AttendanceRecord.find({
+      sessionId: sessionId,
+      status: 'present'
+    }).sort({ verifiedAt: -1 });
+
+    return res.json({
+      punches: punches.map((record) => ({
+        id: record._id.toString(),
+        studentId: record.studentId,
+        identifier: record.identifier,
+        studentName: record.studentName,
+        subject: record.subject,
+        facultyName: record.facultyName,
+        location: record.location,
+        date: record.date,
+        time: record.time,
+        method: record.method,
+        status: record.status,
+        verifiedAt: record.verifiedAt
+      }))
+    });
+
+  } catch (err) {
+    console.error('[Attendance] Error retrieving session punches:', err);
+
+    return res.status(500).json({
+      message: err.message || 'Error retrieving session punches'
+    });
+  }
+});
+
 // POST /api/attendance/biometric-punch
 router.post('/biometric-punch', authenticateToken, async (req, res) => {
   try {
