@@ -102,6 +102,63 @@ router.post('/sessions/:id/close', authenticateToken, requireRole('faculty'), as
     });
   }
 });
+// POST /api/attendance/sessions (Faculty Only)
+router.post('/sessions', authenticateToken, requireRole('faculty'), async (req, res) => {
+  try {
+    const { subject, sessionType, location } = req.body;
+
+    if (!subject || !location) {
+      return res.status(400).json({
+        message: 'Subject and location are required.'
+      });
+    }
+
+    const faculty = await User.findById(req.user.id);
+
+    // Close any previous open sessions for this faculty
+    await AttendanceSession.updateMany(
+      {
+        facultyId: req.user.id,
+        status: 'open'
+      },
+      {
+        status: 'closed',
+        closedAt: new Date()
+      }
+    );
+
+    const session = new AttendanceSession({
+      subject,
+      sessionType: sessionType || 'Lecture',
+      location,
+      facultyId: req.user.id,
+      facultyName: faculty ? faculty.name : 'Faculty Member',
+      status: 'open',
+      openedAt: new Date()
+    });
+
+    await session.save();
+
+    return res.status(201).json({
+      id: session._id.toString(),
+      subject: session.subject,
+      sessionType: session.sessionType,
+      location: session.location,
+      facultyId: session.facultyId,
+      facultyName: session.facultyName,
+      status: session.status,
+      openedAt: session.openedAt,
+      closedAt: session.closedAt || undefined
+    });
+
+  } catch (err) {
+    console.error('[Attendance] Error opening session:', err);
+
+    return res.status(500).json({
+      message: err.message || 'Failed to open attendance session'
+    });
+  }
+});
 
 // POST /api/attendance/biometric-punch
 router.post('/biometric-punch', authenticateToken, async (req, res) => {
