@@ -5,6 +5,7 @@
  */
 
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const { verifyAuthenticationResponse } = require('@simplewebauthn/server');
 const { authenticateToken, requireRole } = require('./auth');
@@ -43,68 +44,64 @@ router.get('/sessions', authenticateToken, async (_req, res) => {
 });
 
 // POST /api/attendance/sessions (Faculty Only)
-router.post('/sessions', authenticateToken, requireRole('faculty'), async (req, res) => {
-  try {
-    const { subject, sessionType, location } = req.body;
-    if (!subject || !location) {
-      return res.status(400).json({ message: 'Subject and location are required.' });
-    }
-
-    const faculty = await User.findById(req.user.id);
-
-    // Close any previous open sessions for this faculty
-    await AttendanceSession.updateMany(
-      { facultyId: req.user.id, status: 'open' },
-      { status: 'closed', closedAt: new Date() }
-    );
-
-    const session = new AttendanceSession({
-      subject,
-      sessionType: sessionType || 'Lecture',
-      location,
-      facultyId: req.user.id,
-      facultyName: faculty ? faculty.name : 'Faculty Member',
-      status: 'open',
-      openedAt: new Date()
-    });
-
-    await session.save();
-
-return res.status(201).json({
-  id: session._id.toString(),
-  subject: session.subject,
-  sessionType: session.sessionType,
-  location: session.location,
-  facultyId: session.facultyId,
-  facultyName: session.facultyName,
-  status: session.status,
-  openedAt: session.openedAt,
-  closedAt: session.closedAt || undefined
-});
-} catch (err) {
-  return res.status(500).json({
-    message: err.message || 'Failed to open attendance session'
-  });
-}
-});
-
 // POST /api/attendance/sessions/:id/close (Faculty Only)
 router.post('/sessions/:id/close', authenticateToken, requireRole('faculty'), async (req, res) => {
   try {
-    const session = await AttendanceSession.findById(req.params.id);
+    const sessionId = req.params.id;
+
+    console.log('[Attendance] Close session request:', sessionId);
+
+    if (!sessionId || !mongoose.isValidObjectId(sessionId)) {
+      console.error('[Attendance] Invalid session ID:', sessionId);
+
+      return res.status(400).json({
+        message: `Invalid attendance session ID: ${sessionId}`
+      });
+    }
+
+    const session = await AttendanceSession.findById(sessionId);
+
     if (!session) {
-      return res.status(404).json({ message: 'Attendance session not found.' });
+      console.error('[Attendance] Session not found:', sessionId);
+
+      return res.status(404).json({
+        message: 'Attendance session not found.'
+      });
     }
 
     session.status = 'closed';
     session.closedAt = new Date();
+
     await session.save();
 
-    return res.json({ message: 'Session closed successfully.', session });
+    console.log('[Attendance] Session closed successfully:', sessionId);
+
+    return res.json({
+      success: true,
+      message: 'Session closed successfully.',
+      session: {
+        id: session._id.toString(),
+        subject: session.subject,
+        sessionType: session.sessionType,
+        location: session.location,
+        facultyId: session.facultyId,
+        facultyName: session.facultyName,
+        status: session.status,
+        openedAt: session.openedAt,
+        closedAt: session.closedAt
+      }
+    });
+
   } catch (err) {
-    return res.status(500).json({ message: 'Error closing attendance session' });
+    console.error('[Attendance] CLOSE SESSION ERROR:', err);
+
+    return res.status(500).json({
+      message: err.message || 'Error closing attendance session'
+    });
   }
 });
+
+
 
 // GET /api/attendance/sessions/:id/punches (Faculty Only)
 router.get('/sessions/:id/punches', authenticateToken, requireRole('faculty'), async (req, res) => {
