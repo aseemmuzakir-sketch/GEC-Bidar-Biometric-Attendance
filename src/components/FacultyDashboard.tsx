@@ -498,7 +498,9 @@ export const FacultyDashboard: React.FC = () => {
                       {livePunches.length > 0 ? (
                         livePunches.map((punch) => (
                           <tr key={punch.id} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-2.5 px-4 font-semibold text-slate-900">{punch.name}</td>
+                            <td className="py-2.5 px-4 font-semibold text-slate-900">
+                              {punch.studentName || punch.name || 'Student'}
+                            </td>
                             <td className="py-2.5 px-4 font-mono tabular-nums text-slate-700">
                               {punch.identifier}
                             </td>
